@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "task_manager_DB"
+      POSTGRES_USER: "amogus"
+      POSTGRES_PASSWORD: "1234"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "2750:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amogus -d task_manager_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+  auth:
+    build:
+      context: ./task_manager
+      dockerfile: Dockerfile
+    container_name: server_auth
+    ports:
+      - "8080:8080"
+  work:
+    build:
+      context: ./task_manager_work
+      dockerfile: Dockerfile
+    container_name: server_work
+    ports:
+      - "2751:2751"
+
+
+volumes:
+  db_data:
